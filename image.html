@@ -1,0 +1,157 @@
+<script src="processing.min.js"></script> 
+
+<script type="text/processing" data-processing-target="mycanvas">
+
+  boolean init = false;
+  PImage loadedImg;
+  PImage img;
+  int frames = 0;
+  int[] xPos = new int[0];
+  int[] yPos = new int[0];
+  color[] cols = new color[0];
+  color colA;
+  color colB;
+  color tweenCol;
+  boolean positionValid;
+   
+  int sampleRate = 1;
+  int shapePoints = 3;
+
+  int count = 0;
+
+  int x = 0;
+  int y = 0;
+
+  int dx = 300;
+  int dy = 20;
+
+void setup()
+{
+  size(1200,1200);
+  frameRate(60);
+  colorMode(RGB,255);
+  background(0);
+  smooth();
+  noStroke();
+ 
+  loadedImg = loadImage("scream.jpg");
+
+}
+
+void mouseClicked() {
+  save("image.png")
+}
+
+void draw(){  
+  if(!init) {
+    prepImage();
+    init = true;
+  }
+  frames++;
+
+  count ++;
+
+  if (count % 1000 == 0) {
+    int tmp = dx;
+    dx = dy;
+    dy = tmp;
+    count = 0;
+  }
+
+  xx= random(x, x + dx);
+  yy = random(y, y + dy);
+
+  if (frames >= sampleRate) {
+    // reset
+    frames = 0;
+
+    if ((xx > 0) && (yy > 0)) {
+ 
+      positionValid = true;
+ 
+      if(xPos.length > 0) {
+        if ((xx == xPos[xPos.length-1]) && (yy == yPos[yPos.length-1])) {
+           positionValid = false;
+        }
+      }
+ 
+      if (positionValid) {
+        // sample point
+        xPos = append(xPos, xx);
+        yPos = append(yPos, yy);
+ 
+        //println(xPos);
+        //println(yPos);
+
+        //draw shape
+        if (xPos.length >= shapePoints) {
+ 
+          colA = getCol(pixelID(xPos[xPos.length-1], yPos[yPos.length-1]), 100);
+          colB = getCol(pixelID(xPos[xPos.length-2], yPos[yPos.length-2]), 100);
+          
+          tweenCol = lerpColor(colA, colB, .5);
+          fill(tweenCol);
+ 
+          beginShape();
+          noStroke();
+
+           for(int v = 0;  v < shapePoints; v++) {
+             vertex(xPos[v],yPos[v]);
+           }
+          // close
+          endShape(CLOSE);
+ 
+          xPos = new int[0];
+          yPos = new int[0];
+
+          x = random(0, 1200 - dx);
+          y = random(0, 1200 - dy);
+        }
+      }
+ 
+    }
+ 
+  }
+}
+
+void prepImage() {
+float iRatio = float(loadedImg.width)/float(loadedImg.height);
+  float cRatio = float(width)/float(height);
+  if (iRatio > cRatio) {
+   // extend height to fit
+   loadedImg.resize(0,height);
+   // grab center of image
+   img = loadedImg.get(((loadedImg.width - width)/2), 0, width, height);
+  } else {
+   // extend width to fit
+   loadedImg.resize(width,0);
+   // grab middle of image
+   img = loadedImg.get(0, ((loadedImg.height - height)/2), width, height);
+  }
+
+  // show daed image in BG
+  //tint(100,255);
+  //imageMode(CENTER);
+  //image(img, 0,0);
+  //image(loadedImg, 0,0);
+}
+
+
+color getCol(int loc, int a) {
+  // Get the R,G,B values from image
+  float r = red (loadedImg.pixels[loc]);
+  float g = green(loadedImg.pixels[loc]);
+  float b = blue(loadedImg.pixels[loc]);
+  return color(r,g,b,a);
+}
+ 
+int pixelID(int x, int y) {
+ int xpx = int((float(x)/float(width))*loadedImg.width);
+ int ypx = int((float(y)/float(height))*loadedImg.height);
+ 
+ return int((ypx*loadedImg.width)+xpx);
+}
+
+
+</script>
+<canvas id="mycanvas"></canvas>
